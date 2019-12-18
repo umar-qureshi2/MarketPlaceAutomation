@@ -5,6 +5,7 @@ using System.Data;
 using System.Drawing;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Newtonsoft.Json;
@@ -31,8 +32,8 @@ namespace QuickTypeJsonToDocumentation
             var lines = inputText.Replace("\tlet ", "")
                                   .Replace("    let ", "")
                                   .Replace(" ", "")
-                                  .Split('\r','\n')
-                                  .Where(x=>!string.IsNullOrWhiteSpace(x));
+                                  .Split('\r', '\n')
+                                  .Where(x => !string.IsNullOrWhiteSpace(x));
             StringBuilder outputDoc = new StringBuilder();
             foreach (var line in lines)
             {
@@ -88,7 +89,7 @@ namespace QuickTypeJsonToDocumentation
                 result = "Boolean or truthy value";
 
             if (dataType.EndsWith("Array"))
-                result = "Array of " + result.Replace("Array","");
+                result = "Array of " + result.Replace("Array", "");
             return result;
         }
 
@@ -106,5 +107,30 @@ namespace QuickTypeJsonToDocumentation
         {
             GenerateDoc();
         }
+
+        private void GetErrorMessages_Click(object sender, EventArgs e)
+        {
+            var errorMessageText = ErrorMessagesInputBox.Text;
+            var errorMessages = errorMessageText.Split('\r', '\n')
+                                  .Where(x => !string.IsNullOrWhiteSpace(x));
+            StringBuilder outputErrorMessages = new StringBuilder();
+            foreach (var errorMessage in errorMessages)
+            {
+                //var errorCleaned = new String(Regex.Replace(errorMessage, "\\{.*\\}\r\n", "").TakeWhile(x => !(x == '.' || x == ':')).ToArray());
+                var errorCleaned = Regex.Replace(errorMessage, "\\{.*\\}", "");
+                outputErrorMessages.AppendLine();
+                outputErrorMessages.AppendLine($"If the case that {errorCleaned} then:");
+                outputErrorMessages.AppendLine(@"[{
+
+                                ""ErrorCode"": ""InValidData"",
+                                ""ErrorType"": ""Business Validation Error"",
+                                ""ErrorMessage"": """ + errorMessage + @""",
+                                ""ErrorKey"": null
+}]");
+                outputErrorMessages.AppendLine();
+            }
+
+            ErrorMessagesOutputBox.Text = outputErrorMessages.ToString();
     }
+}
 }
